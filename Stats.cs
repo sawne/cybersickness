@@ -5,7 +5,6 @@ using UnityEngine.UI;
 using System.IO;
 using TMPro;
 using System.Globalization;
-using UnityEngine.XR.Interaction.Toolkit;
 
 public class CSVExporter : MonoBehaviour
 {
@@ -37,11 +36,12 @@ public class CSVExporter : MonoBehaviour
         fileWriter.WriteLine("Time, X, Y, Z, Rotation, isSick");
 
         popupCanvas.gameObject.SetActive(false);
-        negativeButton.onClick.AddListener(() => { AnswerButtonClicked(-1); });
-        neutralButton.onClick.AddListener(() => { AnswerButtonClicked(0); });
-        positiveButton.onClick.AddListener(() => { AnswerButtonClicked(1); });
+        negativeButton.onClick.AddListener(NegativeButtonClicked);
+        neutralButton.onClick.AddListener(NeutralButtonClicked);
+        positiveButton.onClick.AddListener(PositiveButtonClicked);
 
         StartCoroutine(ShowPopupRoutine());
+        StartDataRecording();
     }
 
     void RecordPlayerData()
@@ -49,9 +49,9 @@ public class CSVExporter : MonoBehaviour
         if (isRecordingEnabled)
         {
             Vector3 playerPosition = transform.position;
-            float playerRotation = transform.rotation.eulerAngles.y;
+            Quaternion playerRotation = transform.rotation;
             float currentTime = Time.time;
-            string data = currentTime + "," + playerPosition.x + "," + playerPosition.y + "," + playerPosition.z + "," + playerRotation + "," + isSick;
+            string data = string.Format("{0},{1},{2},{3},{4},{5}", currentTime, playerPosition.x, playerPosition.y, playerPosition.z, playerRotation.eulerAngles.y, isSick);
             fileWriter.WriteLine(data);
         }
     }
@@ -61,33 +61,37 @@ public class CSVExporter : MonoBehaviour
         while (true)
         {
             popupCanvas.gameObject.SetActive(true);
-            StopDataRecording();
+            isRecordingEnabled = false; // Suspendre l'enregistrement des données pendant que la popup est affichée
             popupText.text = "How do you feel?";
             playerResponded = false;
             yield return new WaitUntil(() => playerResponded);
             popupCanvas.gameObject.SetActive(false);
-            StartDataRecording();
+            isRecordingEnabled = true; // Reprendre l'enregistrement des données
             yield return new WaitForSeconds(popupInterval);
         }
     }
 
-    void AnswerButtonClicked(int response)
+    void NegativeButtonClicked()
     {
-        isSick = response;
+        isSick = -1;
+        playerResponded = true;
+    }
+
+    void NeutralButtonClicked()
+    {
+        isSick = 0;
+        playerResponded = true;
+    }
+
+    void PositiveButtonClicked()
+    {
+        isSick = 1;
         playerResponded = true;
     }
 
     void StartDataRecording()
     {
-        if (isRecordingEnabled)
-        {
-            InvokeRepeating("RecordPlayerData", 0, recordingInterval);
-        }
-    }
-
-    void StopDataRecording()
-    {
-        CancelInvoke("RecordPlayerData");
+        InvokeRepeating("RecordPlayerData", 0, recordingInterval);
     }
 
     void OnDestroy()
