@@ -1,15 +1,29 @@
 import csv
 
-# Create a diagonal cylinder
-def cylinder_define(px, py, pz):
-    eq_cylinder = (px ** 2 + py ** 2 + pz ** 2) - \
-               ((
-                        vector[0] * (px - arriving_point[0])
-                        + vector[1] * (py - arriving_point[1])
-                        + vector[2] * (pz - arriving_point[2])) ** 2
-                / (vector[0] ** 2) + (vector[1] ** 2) + (vector[2] ** 2))
+
+# Créer un cylindre oblique
+# Variable coordinates du point
+# Variable ce qui va calculer le cylindre
+# j = k et l = i
+def define_cylinder(pa, pb, pc, points_list, j, o):
+    eq_cylinder = (points_list[o][0] ** 2 + points_list[o][1] ** 2 + points_list[o][2] ** 2) - \
+                  ((
+                           pa * (points_list[o][0] - points_list[j + 1][0])
+                           + pb * (points_list[o][1] - points_list[j + 1][0])
+                           + pc * (points_list[o][2] - points_list[j + 1][0])) ** 2
+                   / ((pa ** 2) + (pb ** 2) + (pc ** 2)))
 
     return eq_cylinder
+
+
+def calculate_vector_dir(points_list, m):
+    # Définir le vecteur entre nos deux points
+    vector = (points_list[m + 1][0] - points_list[m][0],
+              points_list[m + 1][1] - points_list[m][1],
+              points_list[m + 1][2] - points_list[m][2])
+
+    return vector
+
 
 # Chemin vers le fichier CSV
 csv_file = '../PlayerData_20240129102610.csv'
@@ -34,51 +48,49 @@ with open(csv_file, newline='') as csvfile:
 sublist_length = 120
 
 # Liste pour stocker les sous-listes de XYZ et isSick
-position_data_sublist = []
-isSick_data_sublist = []
+position_data_list = []
+isSick_data_list = []
 
 # Diviser les données XYZ en sous-listes
 for i in range(0, len(position_data), sublist_length):
     sublist = position_data[i:i + sublist_length]
     if len(sublist) == sublist_length:
-        position_data_sublist.append(sublist)
+        position_data_list.append(sublist)
 
 # Diviser les données isSick en sous-listes
 for i in range(0, len(isSick_data), sublist_length):
     sublist = isSick_data[i:i + sublist_length]
     if len(sublist) == sublist_length:
-        isSick_data_sublist.append(sublist)
+        isSick_data_list.append(sublist)
 
-print(position_data_sublist)
-print(isSick_data_sublist)
+print(position_data_list)
+print(isSick_data_list)
 
 compressed_list = []
 
 # Pour chaque liste de "sublist_length" éléments on compresse selon les déplacements du joueur
-for sublist in position_data_sublist:
-    i = 0
-    compressed_sublist = []
-    compression_finished = False
+for sublist in position_data_list:
+    error = 1000
 
-    # Point de départ et d'arrivée du cylindre, point de départ étant fixé au dernier point position du joueur
-    starting_point = sublist[0][-1]
-    arriving_point = sublist[0][i]
-    vector = arriving_point - starting_point
+    compressed_sublist = 1
 
-    #
-    while not compression_finished:
-        check_point = sublist[0][i + 1]
-        result = cylinder_define(check_point)
+    k, i = (0, 0)
+    len_sublist = len(sublist)
+    while k < len_sublist:
+        if k == len_sublist - 2:
+            compressed_sublist += 2
 
-        if result = :
-            continue
+        elif k == len_sublist - 1:
+            compressed_sublist += 1
+
         else:
-            i += 1
-            arriving_point = sublist[0][i]
+            a, b, c = calculate_vector_dir(sublist, k)
+            while define_cylinder(a, b, c, sublist, k, i) <= error:
+                i += 1
 
-    # On ajoute le dernier point manuellement
-    compressed_sublist.append(sublist[0][-1])
-    compressed_list.append(compressed_sublist)
+            k = i - 1
+            i = k
 
+            compressed_sublist += 1
 
-
+print(compressed_list)
