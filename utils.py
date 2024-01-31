@@ -1,4 +1,8 @@
 import csv
+import openpyxl
+from openpyxl.utils import get_column_letter
+from datetime import datetime
+import os
 
 
 # Créer un cylindre oblique
@@ -6,11 +10,14 @@ import csv
 # Variable ce qui va calculer le cylindre
 # j = k et l = i
 def define_cylinder(pa, pb, pc, points_list, j, o):
+    if a == 0 and b == 0 and c == 0:
+        return 2147000000
+
     eq_cylinder = (points_list[o][0] ** 2 + points_list[o][1] ** 2 + points_list[o][2] ** 2) - \
                   ((
-                           pa * (points_list[o][0] - points_list[j + 1][0])
-                           + pb * (points_list[o][1] - points_list[j + 1][0])
-                           + pc * (points_list[o][2] - points_list[j + 1][0])) ** 2
+                           pa * (points_list[o + 1][0] - points_list[j][0])
+                           + pb * (points_list[o + 1][1] - points_list[j][1])
+                           + pc * (points_list[o + 1][2] - points_list[j][2])) ** 2
                    / ((pa ** 2) + (pb ** 2) + (pc ** 2)))
 
     return eq_cylinder
@@ -26,7 +33,7 @@ def calculate_vector_dir(points_list, m):
 
 
 # Chemin vers le fichier CSV
-csv_file = '../PlayerData_20240129102610.csv'
+csv_file = './PlayerData_20240129102610.csv'
 
 # Listes pour stocker les données
 position_data = []
@@ -63,10 +70,11 @@ for i in range(0, len(isSick_data), sublist_length):
     if len(sublist) == sublist_length:
         isSick_data_list.append(sublist)
 
-print(position_data_list)
-print(isSick_data_list)
+# print(position_data_list)
+# print(isSick_data_list)
 
 compressed_list = []
+compressed_sublist_list = []
 
 # Pour chaque liste de "sublist_length" éléments on compresse selon les déplacements du joueur
 for sublist in position_data_list:
@@ -85,12 +93,49 @@ for sublist in position_data_list:
 
         else:
             a, b, c = calculate_vector_dir(sublist, k)
+
             while define_cylinder(a, b, c, sublist, k, i) <= error:
                 i += 1
+                compressed_sublist += 1
 
-            k = i - 1
-            i = k
+            k = i
 
-            compressed_sublist += 1
+    compressed_sublist_list.append(compressed_sublist / len(sublist))
 
-print(compressed_list)
+
+
+
+
+
+#
+
+# Liste des pourcentages de compression
+print(compressed_sublist_list)
+
+# Créer un nouveau classeur Excel
+wb = openpyxl.Workbook()
+
+# Sélectionner la première feuille de calcul
+sheet = wb.active
+
+# Écrire les données dans les colonnes
+for i, (isSick, compression) in enumerate(zip(isSick_data_list, compressed_sublist_list), start=1):
+    sheet[get_column_letter(1) + str(i)] = isSick
+    sheet[get_column_letter(2) + str(i)] = compression
+
+# Nom du fichier basé sur le timestamp
+timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+filename = f"data_{timestamp}.xlsx"
+
+# Déterminer le chemin complet du répertoire de sortie
+current_directory = os.path.dirname(__file__) if __file__ else '.'
+output_directory = os.path.join(current_directory, '..', 'Compression_data')
+
+# Assurez-vous que le répertoire de sortie existe, sinon, créez-le
+os.makedirs(output_directory, exist_ok=True)
+
+# Chemin complet du fichier de sortie
+output_path = os.path.join(output_directory, filename)
+
+# Sauvegarder le fichier Excel dans le répertoire Compression_data
+wb.save(output_path)
