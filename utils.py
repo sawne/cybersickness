@@ -1,30 +1,33 @@
 import csv
+import math
+import pandas as pd
+
 import openpyxl
 from openpyxl.utils import get_column_letter
 from datetime import datetime
 import os
 
 
-# Créer un cylindre oblique
-# Variable coordinates du point
-# Variable ce qui va calculer le cylindre
-# j = k et l = i
-def define_cylinder(pa, pb, pc, points_list, j, o):
-    if a == 0 and b == 0 and c == 0:
-        return 2147000000
+# Return distance between two points in format [x,y,z]
+def distance(point_a, point_b):
+    return math.sqrt((point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2 + (point_a[2] - point_b[2]) ** 2)
 
+
+# Create a cylinder between two points
+# j = k (start point) and l = i (end point)
+def define_cylinder(pa, pb, pc, points_list, j, o):
     eq_cylinder = (points_list[o][0] ** 2 + points_list[o][1] ** 2 + points_list[o][2] ** 2) - \
                   ((
-                           pa * (points_list[o + 1][0] - points_list[j][0])
-                           + pb * (points_list[o + 1][1] - points_list[j][1])
-                           + pc * (points_list[o + 1][2] - points_list[j][2])) ** 2
+                           pa * (points_list[o][0] - points_list[j][0])
+                           + pb * (points_list[o][1] - points_list[j][1])
+                           + pc * (points_list[o][2] - points_list[j][2])) ** 2
                    / ((pa ** 2) + (pb ** 2) + (pc ** 2)))
 
     return eq_cylinder
 
 
+# Calculate the vector director between two points
 def calculate_vector_dir(points_list, m):
-    # Définir le vecteur entre nos deux points
     vector = (points_list[m + 1][0] - points_list[m][0],
               points_list[m + 1][1] - points_list[m][1],
               points_list[m + 1][2] - points_list[m][2])
@@ -32,14 +35,12 @@ def calculate_vector_dir(points_list, m):
     return vector
 
 
-# Chemin vers le fichier CSV
 csv_file = './PlayerData_20240129102610.csv'
 
-# Listes pour stocker les données
 position_data = []
 isSick_data = []
 
-# Lecture du fichier CSV et extraction des données
+# Extract data
 with open(csv_file, newline='') as csvfile:
     csv_reader = csv.reader(csvfile, delimiter=',')
     next(csv_reader)  # Ignorer l'en-tête
@@ -51,91 +52,106 @@ with open(csv_file, newline='') as csvfile:
         position_data.append([x, y, z])
         isSick_data.append(is_sick)
 
-# Nombre d'éléments par sous-liste
-sublist_length = 120
+# Cut list in sublist of 120 elements, 120 is the number of movements collected for 1 answer of sickness
+sublist_length = 120    # We keep it as a variable in case we need to change it
 
-# Liste pour stocker les sous-listes de XYZ et isSick
 position_data_list = []
 isSick_data_list = []
 
-# Diviser les données XYZ en sous-listes
+# Divide position data into 120 elements
 for i in range(0, len(position_data), sublist_length):
-    sublist = position_data[i:i + sublist_length]
-    if len(sublist) == sublist_length:
+    sublist = position_data[i:i + sublist_length]   # 0:119 - 120:239 - 240:359...
+    if len(sublist) == sublist_length:  # if sublist has not 120 elements it's too short to keep it
         position_data_list.append(sublist)
 
-# Diviser les données isSick en sous-listes
+# Divide isSick into 120 elements
 for i in range(0, len(isSick_data), sublist_length):
     sublist = isSick_data[i:i + sublist_length]
     if len(sublist) == sublist_length:
         isSick_data_list.append(sublist)
 
+# Keep only 1 example of isSick data
+isSick = []
+for sublist in isSick_data_list:
+    isSick.append(sublist[0])
+
 # print(position_data_list)
-# print(isSick_data_list)
+# print(isSick)
 
-compressed_list = []
-compressed_sublist_list = []
+# Clean point too close of 0.3 distance
+distance_threshold = 0.3
 
-# Pour chaque liste de "sublist_length" éléments on compresse selon les déplacements du joueur
-for sublist in position_data_list:
-    error = 1000
+# Try different metrics
+errors = [1000, 2000, 3000, 5000, 10000]
+count_compression_compilation = []
 
-    compressed_sublist = 1
+for error in errors:
+    count_compression = 0
+    count_compression_list = []
+    # For each sublist we compress movement player list and calculate the compression ratio
+    for sublist in position_data_list:
+        cleaned_sublist = []  # Sublist without points too close together
+        count_compression = 1  # First point
 
-    k, i = (0, 0)
-    len_sublist = len(sublist)
-    while k < len_sublist:
-        if k == len_sublist - 2:
-            compressed_sublist += 2
+        # Clean points too close together
+        for i in range(1, 120):
+            if distance(sublist[i], sublist[i - 1]) < distance_threshold:
+                count_compression += 1
+            else:
+                cleaned_sublist.append(sublist[i])
 
-        elif k == len_sublist - 1:
-            compressed_sublist += 1
+        # Compression algorithm
+        k, i = (0, 2)
+        size = len(cleaned_sublist)
+        while k < size:
+            if k == size - 1:
+                count_compression += 1
+                k = size
 
-        else:
-            a, b, c = calculate_vector_dir(sublist, k)
+            if k == size - 2:
+                count_compression += 2
+                k = size
 
-            while define_cylinder(a, b, c, sublist, k, i) <= error:
-                i += 1
-                compressed_sublist += 1
+            else:
+                a, b, c = calculate_vector_dir(cleaned_sublist, k)  # VEC DIR: sublist[k] / sublist[i]
+                # Check if clean_sublist[i - 1] is inside the cylinder
+                # print(define_cylinder(a, b, c, cleaned_sublist, k, i))
+                if define_cylinder(a, b, c, cleaned_sublist, k, i) < error:     # À update // Point [i -1] inside cylinder?
+                    count_compression += 1
+                    if i < (size - 1):
+                        i += 1
+                    else:
+                        k = size
 
-            k = i
+                else:
+                    k = i - 1
+                    i = k + 2
 
-    compressed_sublist_list.append(compressed_sublist / len(sublist))
+        count_compression_list.append(count_compression)
+
+    count_compression_compilation.append(count_compression_list)
+
+# Get each compression counter in %
+for sublist in count_compression_compilation:
+    # Be careful to give an int in input
+    for i in range(len(sublist)):
+        sublist[i] = (sublist[i] * 100) / 120
+
+print(isSick)
+print(count_compression_compilation)
+
+# Créer un dictionnaire pour stocker les données
+data = {'isSick': isSick}
+
+# Ajouter les colonnes pour chaque valeur dans errors
+for error in errors:
+    for i, sublist in enumerate(count_compression_compilation):
+        print(f'error_{error} : minute_{i} // {sublist}\n')
 
 
 
-
-
-
+# # Créer un DataFrame à partir du dictionnaire de données
+# df = pd.DataFrame(data)
 #
-
-# Liste des pourcentages de compression
-print(compressed_sublist_list)
-
-# Créer un nouveau classeur Excel
-wb = openpyxl.Workbook()
-
-# Sélectionner la première feuille de calcul
-sheet = wb.active
-
-# Écrire les données dans les colonnes
-for i, (isSick, compression) in enumerate(zip(isSick_data_list, compressed_sublist_list), start=1):
-    sheet[get_column_letter(1) + str(i)] = isSick
-    sheet[get_column_letter(2) + str(i)] = compression
-
-# Nom du fichier basé sur le timestamp
-timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-filename = f"data_{timestamp}.xlsx"
-
-# Déterminer le chemin complet du répertoire de sortie
-current_directory = os.path.dirname(__file__) if __file__ else '.'
-output_directory = os.path.join(current_directory, '..', 'Compression_data')
-
-# Assurez-vous que le répertoire de sortie existe, sinon, créez-le
-os.makedirs(output_directory, exist_ok=True)
-
-# Chemin complet du fichier de sortie
-output_path = os.path.join(output_directory, filename)
-
-# Sauvegarder le fichier Excel dans le répertoire Compression_data
-wb.save(output_path)
+# # Exporter le DataFrame vers un fichier Excel
+# df.to_excel('donnees_traitees.xlsx', index=False)
