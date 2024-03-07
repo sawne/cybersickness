@@ -39,7 +39,7 @@ def calculate_vector_dir(points_list, m):
 
 
 # csv_file = './PlayerData_20240129102610.csv'
-csv_file = './Fleur2.csv'
+csv_file = 'Fleur2.csv'
 
 position_data = []
 isSick_data = []
