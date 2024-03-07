@@ -7,6 +7,9 @@ from openpyxl.utils import get_column_letter
 from datetime import datetime
 import os
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 
 # Return distance between two points in format [x,y,z]
 def distance(point_a, point_b):
@@ -75,6 +78,30 @@ for i in range(0, len(isSick_data), sublist_length):
 isSick = []
 for sublist in isSick_data_list:
     isSick.append(sublist[0])
+
+# Créer une figure
+fig = plt.figure()
+
+# Parcourir chaque sous-liste dans position_data_list
+for sublist in position_data_list:
+    # Extraire les coordonnées x, y et z de la sous-liste
+    x = [point[0] for point in sublist]
+    z = [point[1] for point in sublist]
+    y = [point[2] for point in sublist]
+
+    # Créer un nouveau graphique 3D
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Ajouter les points au graphique
+    ax.scatter(x, y, z)
+
+    # Définir les labels des axes
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    # Afficher le graphique
+    plt.show()
 
 # print(position_data_list)
 # print(isSick)
