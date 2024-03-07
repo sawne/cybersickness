@@ -35,7 +35,8 @@ def calculate_vector_dir(points_list, m):
     return vector
 
 
-csv_file = './PlayerData_20240129102610.csv'
+# csv_file = './PlayerData_20240129102610.csv'
+csv_file = './Fleur2.csv'
 
 position_data = []
 isSick_data = []
@@ -82,7 +83,7 @@ for sublist in isSick_data_list:
 distance_threshold = 0.3
 
 # Try different metrics
-errors = [1000, 2000, 3000, 5000, 10000]
+errors = [1000, 2000, 3000, 5000]
 count_compression_compilation = []
 
 for error in errors:
@@ -144,9 +145,8 @@ print(count_compression_compilation)
 data = {'isSick': isSick}
 
 # Ajouter les colonnes pour chaque valeur dans errors
-for error in errors:
-    for i, sublist in enumerate(count_compression_compilation):
-        print(f'error_{error} : minute_{i} // {sublist}\n')
+for i, error in enumerate(errors):
+    print(f'error_{error} : {count_compression_compilation[i]}\n')
 
 
 
