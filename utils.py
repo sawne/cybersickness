@@ -173,7 +173,7 @@ data = {'isSick': isSick}
 
 # Ajouter les colonnes pour chaque valeur dans errors
 for i, error in enumerate(errors):
-    print(f'error_{error} : {count_compression_compilation[i]}\n')
+    print(f'error_{error} : {count_compression_compilation[i]}')
 
 
 
