@@ -3,6 +3,7 @@ import math
 import pandas as pd
 
 import openpyxl
+from matplotlib import pyplot
 from openpyxl.utils import get_column_letter
 from datetime import datetime
 import os
@@ -17,16 +18,24 @@ def distance(point_a, point_b):
 
 
 # Create a cylinder between two points
-# j = k (start point) and l = i (end point)
-def define_cylinder(pa, pb, pc, points_list, j, o):
-    eq_cylinder = (points_list[o][0] ** 2 + points_list[o][1] ** 2 + points_list[o][2] ** 2) - \
-                  ((
-                           pa * (points_list[o][0] - points_list[j][0])
-                           + pb * (points_list[o][1] - points_list[j][1])
-                           + pc * (points_list[o][2] - points_list[j][2])) ** 2
-                   / ((pa ** 2) + (pb ** 2) + (pc ** 2)))
+# j = k (start point) and o = i (end point)
+def define_cylinder(pa, pb, pc, points_list, j, o, rad, compression):
 
-    return eq_cylinder
+    eq_cylinder = ((
+        ((points_list[o - 1][1] - points_list[j][1]) * c - (points_list[o - 1][2] - points_list[k][2]) * b)**2 +
+        ((points_list[o - 1][2] - points_list[k][2]) * a - (points_list[o - 1][0] - points_list[k][0]) * c)**2 +
+        ((points_list[o - 1][0] - points_list[k][0]) * b - (points_list[o - 1][1] - points_list[k][1]) * a)**2)) \
+                  / (a ** 2 + b ** 2 + c ** 2)
+
+    # if eq_cylinder == 0: print(" k = ", j, "i = ", o)
+    # print(eq_cylinder, " < ", (rad ** 2 * (a ** 2 + b ** 2 + c ** 2)))
+
+    if eq_cylinder < (rad ** 2):
+        return True
+
+    else:
+        return False
+
 
 
 # Calculate the vector director between two points
@@ -39,7 +48,7 @@ def calculate_vector_dir(points_list, m):
 
 
 # csv_file = './PlayerData_20240129102610.csv'
-csv_file = 'Fleur2.csv'
+csv_file = 'cyril.csv'
 
 position_data = []
 isSick_data = []
@@ -79,30 +88,6 @@ isSick = []
 for sublist in isSick_data_list:
     isSick.append(sublist[0])
 
-# Créer une figure
-fig = plt.figure()
-
-# Parcourir chaque sous-liste dans position_data_list
-for sublist in position_data_list:
-    # Extraire les coordonnées x, y et z de la sous-liste
-    x = [point[0] for point in sublist]
-    z = [point[1] for point in sublist]
-    y = [point[2] for point in sublist]
-
-    # Créer un nouveau graphique 3D
-    ax = fig.add_subplot(111, projection='3d')
-
-    # Ajouter les points au graphique
-    ax.scatter(x, y, z)
-
-    # Définir les labels des axes
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-
-    # Afficher le graphique
-    plt.show()
-
 # print(position_data_list)
 # print(isSick)
 
@@ -110,70 +95,123 @@ for sublist in position_data_list:
 distance_threshold = 0.3
 
 # Try different metrics
-errors = [1000, 2000, 3000, 5000]
-count_compression_compilation = []
+radius = 1.1
 
-for error in errors:
+count_compression = 0
+compression_list = []
+
+plot_compression_list = []
+len_of_all_plot_compression_list_percentage = []
+# For each sublist we compress movement player list and calculate the compression ratio
+for sublist in position_data_list:
+    cleaned_sublist = []  # Sublist without points too close together
     count_compression = 0
-    count_compression_list = []
-    # For each sublist we compress movement player list and calculate the compression ratio
-    for sublist in position_data_list:
-        cleaned_sublist = []  # Sublist without points too close together
-        count_compression = 1  # First point
 
-        # Clean points too close together
-        for i in range(1, 120):
-            if distance(sublist[i], sublist[i - 1]) < distance_threshold:
+    # Clean points too close together
+    for i in range(1, 120):
+        if distance(sublist[i], sublist[i - 1]) < distance_threshold:
+            count_compression += 1
+        else:
+            cleaned_sublist.append(sublist[i - 1])
+
+    # Compression algorithm
+    k, i = (0, 2)
+    size = len(cleaned_sublist)
+    while k < size:
+        if k == size - 1:
+            count_compression += 1
+            break
+
+        if k == size - 2:
+            count_compression += 2
+            break
+
+        else:
+            a, b, c = calculate_vector_dir(cleaned_sublist, k)  # VEC DIR: sublist[k] / sublist[i]
+            # Check if clean_sublist[i - 1] is inside the cylinder
+            if define_cylinder(a, b, c, cleaned_sublist, k, i, radius, count_compression) is True:
                 count_compression += 1
-            else:
-                cleaned_sublist.append(sublist[i])
-
-        # Compression algorithm
-        k, i = (0, 2)
-        size = len(cleaned_sublist)
-        while k < size:
-            if k == size - 1:
-                count_compression += 1
-                k = size
-
-            if k == size - 2:
-                count_compression += 2
-                k = size
-
-            else:
-                a, b, c = calculate_vector_dir(cleaned_sublist, k)  # VEC DIR: sublist[k] / sublist[i]
-                # Check if clean_sublist[i - 1] is inside the cylinder
-                # print(define_cylinder(a, b, c, cleaned_sublist, k, i))
-                if define_cylinder(a, b, c, cleaned_sublist, k, i) < error:     # À update // Point [i -1] inside cylinder?
-                    count_compression += 1
-                    if i < (size - 1):
-                        i += 1
-                    else:
-                        k = size
-
+                if i < (size - 1):
+                    i += 1
                 else:
-                    k = i - 1
-                    i = k + 2
+                    break
 
-        count_compression_list.append(count_compression)
+            else:
+                plot_compression_list.append(sublist[i - 1])
+                k = i - 1
+                i = k + 2
 
-    count_compression_compilation.append(count_compression_list)
+    compression_list.append(count_compression)
+    print(len(plot_compression_list))
+    len_of_all_plot_compression_list_percentage.append(((120 - len(plot_compression_list)) / 120) * 100)
+
+
+
+# print(len(plot_compression_list))
+
+# Créer une figure
+fig = plt.figure()
+
+# Créer un nouveau graphique 3D
+ax = fig.add_subplot(111, projection='3d')
+
+# Extraire les coordonnées x, y et z de plot_compression_list
+x_red = [point[0] for point in plot_compression_list]
+z_red = [point[1] for point in plot_compression_list]
+y_red = [point[2] for point in plot_compression_list]
+
+tmp_list = []
+colors = ['blue', 'green', 'red', 'purple', 'orange', 'yellow']
+
+for i in range(len(position_data)):
+    if i % 120 == 0:
+        tmp_list.append(position_data[i])
+
+x_green = [point[0] for point in tmp_list]
+z_green = [point[1] for point in tmp_list]
+y_green = [point[2] for point in tmp_list]
+
+# Ajouter les points rouges au graphique
+ax.scatter(x_red, y_red, z_red, c='red')
+ax.scatter(x_green, y_green, z_green, c='green')
+
+
+# # Parcourir chaque sous-liste dans position_data_list
+# for sublist in position_data_list:
+#     # Extraire les coordonnées x, y et z de la sous-liste
+#     x = [point[0] for point in sublist]
+#     z = [point[1] for point in sublist]
+#     y = [point[2] for point in sublist]
+#
+#     # Ajouter les points bleus au graphique
+#     ax.scatter(x, y, z, c='blue')
+
+# Définir les labels des axes
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+
+# Afficher le graphique
+plt.show()
+
+
+
+print(len_of_all_plot_compression_list_percentage)
+
 
 # Get each compression counter in %
-for sublist in count_compression_compilation:
-    # Be careful to give an int in input
-    for i in range(len(sublist)):
-        sublist[i] = (sublist[i] * 100) / 120
+compression_list_percentage = []
 
-print(isSick)
-print(count_compression_compilation)
+for i in compression_list:
+    compression_list_percentage.append((i * 100) / 120)
 
-# Créer un dictionnaire pour stocker les données
-data = {'isSick': isSick}
+# print(compression_list_percentage)
+# print(isSick)
 
-# Ajouter les colonnes pour chaque valeur dans errors
-for i, error in enumerate(errors):
-    print(f'error_{error} : {count_compression_compilation[i]}')
+
+
+
+
 
 
 

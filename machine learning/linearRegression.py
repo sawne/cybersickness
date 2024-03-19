@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
-from merge_xlsx import merge_excel
+from miscellaneous.merge_xlsx import merge_excel
 
 folder_path = "../data/tmp"
 

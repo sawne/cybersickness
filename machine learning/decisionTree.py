@@ -1,7 +1,7 @@
 
 from sklearn.tree import DecisionTreeRegressor
 
-from merge_xlsx import merge_excel
+from miscellaneous.merge_xlsx import merge_excel
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error

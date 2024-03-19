@@ -1,4 +1,4 @@
-from merge_xlsx import merge_excel
+from miscellaneous.merge_xlsx import merge_excel
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import train_test_split
