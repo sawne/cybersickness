@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 from miscellaneous.merge_xlsx import merge_excel
 
-folder_path = "../data/tmp"
+folder_path = "../data_compressed/explorer"
 
 X, y = merge_excel(folder_path)
 

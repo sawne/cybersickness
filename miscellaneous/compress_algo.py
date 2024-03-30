@@ -48,12 +48,12 @@ def calculate_vector_dir(points_list, m):
 
 
 # csv_file = './PlayerData_20240129102610.csv'
-csv_file = 'cyril.csv'
+csv_file = '../miscellaneous/cyril.csv'
 
 position_data = []
 isSick_data = []
 
-# Extract data
+# Extract data_collected
 with open(csv_file, newline='') as csvfile:
     csv_reader = csv.reader(csvfile, delimiter=',')
     next(csv_reader)  # Ignorer l'en-tête
@@ -71,7 +71,7 @@ sublist_length = 120    # We keep it as a variable in case we need to change it
 position_data_list = []
 isSick_data_list = []
 
-# Divide position data into 120 elements
+# Divide position data_collected into 120 elements
 for i in range(0, len(position_data), sublist_length):
     sublist = position_data[i:i + sublist_length]   # 0:119 - 120:239 - 240:359...
     if len(sublist) == sublist_length:  # if sublist has not 120 elements it's too short to keep it
@@ -83,7 +83,7 @@ for i in range(0, len(isSick_data), sublist_length):
     if len(sublist) == sublist_length:
         isSick_data_list.append(sublist)
 
-# Keep only 1 example of isSick data
+# Keep only 1 example of isSick data_collected
 isSick = []
 for sublist in isSick_data_list:
     isSick.append(sublist[0])
@@ -95,7 +95,7 @@ for sublist in isSick_data_list:
 distance_threshold = 0.3
 
 # Try different metrics
-radius = 1.1
+radius = 1.3
 
 count_compression = 0
 compression_list = []
@@ -106,6 +106,7 @@ len_of_all_plot_compression_list_percentage = []
 for sublist in position_data_list:
     cleaned_sublist = []  # Sublist without points too close together
     count_compression = 0
+    plot_compression_list = []
 
     # Clean points too close together
     for i in range(1, 120):
@@ -145,10 +146,6 @@ for sublist in position_data_list:
     print(len(plot_compression_list))
     len_of_all_plot_compression_list_percentage.append(((120 - len(plot_compression_list)) / 120) * 100)
 
-
-
-# print(len(plot_compression_list))
-
 # Créer une figure
 fig = plt.figure()
 
@@ -176,7 +173,7 @@ ax.scatter(x_red, y_red, z_red, c='red')
 ax.scatter(x_green, y_green, z_green, c='green')
 
 
-# # Parcourir chaque sous-liste dans position_data_list
+# Parcourir chaque sous-liste dans position_data_list
 # for sublist in position_data_list:
 #     # Extraire les coordonnées x, y et z de la sous-liste
 #     x = [point[0] for point in sublist]
@@ -194,29 +191,29 @@ ax.set_zlabel('Z')
 # Afficher le graphique
 plt.show()
 
-
-
 print(len_of_all_plot_compression_list_percentage)
+print(isSick)
 
+# Créer un DataFrame à partir des données
+df = pd.DataFrame({'compression': len_of_all_plot_compression_list_percentage, 'isSick': isSick})
 
-# Get each compression counter in %
-compression_list_percentage = []
+# Extraire le nom du fichier d'entrée
+filename = os.path.splitext(os.path.basename(csv_file))[0]
 
-for i in compression_list:
-    compression_list_percentage.append((i * 100) / 120)
+# Définir le nom du fichier de sortie
+output_filename = f"{filename}_conversion.xlsx"
 
-# print(compression_list_percentage)
-# print(isSick)
+# Chemin du dossier de sortie
+output_folder = "./data/conversion"
 
+# Assurez-vous que le dossier de sortie existe, sinon le créez
+os.makedirs(output_folder, exist_ok=True)
 
+# Chemin complet du fichier de sortie
+output_path = os.path.join(output_folder, output_filename)
 
+# Exporter le DataFrame vers un fichier Excel
+df.to_excel(output_path, index=False)
 
+print(f"Le fichier Excel '{output_filename}' a été créé avec succès dans le dossier '{output_folder}'.")
 
-
-
-
-# # Créer un DataFrame à partir du dictionnaire de données
-# df = pd.DataFrame(data)
-#
-# # Exporter le DataFrame vers un fichier Excel
-# df.to_excel('donnees_traitees.xlsx', index=False)

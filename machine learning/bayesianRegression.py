@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 
-folder_path = "../data/tmp"
+folder_path = "../data_compressed/explorer"
 
 X, y = merge_excel(folder_path)
+print(X, y)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Création du modèle de régression bayésienne
