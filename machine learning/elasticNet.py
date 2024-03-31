@@ -4,6 +4,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from miscellaneous.merge_xlsx import merge_excel
+import joblib
 
 folder_path = "../data_compressed/explorer"
 
@@ -34,3 +35,6 @@ plt.xlabel('X')
 plt.ylabel('y')
 plt.legend()
 plt.show()
+
+# Exportation du modèle ElasticNet
+joblib.dump(elastic_net, 'elastic_net_regression_model.pkl')

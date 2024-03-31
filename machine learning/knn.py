@@ -3,6 +3,7 @@ from miscellaneous.merge_xlsx import merge_excel
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
+import joblib
 
 folder_path = "../data_compressed/explorer"
 
@@ -35,3 +36,6 @@ plt.xlabel('X')
 plt.ylabel('y')
 plt.legend()
 plt.show()
+
+# Exportation du modèle KNN
+joblib.dump(knn_regressor, 'knn_regression_model.pkl')

@@ -4,6 +4,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
 from miscellaneous.merge_xlsx import merge_excel
+import joblib
 
 folder_path = "../data_compressed/explorer"
 
@@ -39,3 +40,6 @@ plt.xticks(())
 plt.yticks(())
 
 plt.show()
+
+# Exportation du modèle de régression linéaire
+joblib.dump(regr, 'linear_regression_model.pkl')

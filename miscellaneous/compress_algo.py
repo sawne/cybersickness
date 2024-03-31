@@ -1,5 +1,8 @@
+## Modules
 import csv
 import math
+
+import plotly.graph_objects as go
 import pandas as pd
 
 import openpyxl
@@ -11,44 +14,9 @@ import os
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-
-# Return distance between two points in format [x,y,z]
-def distance(point_a, point_b):
-    return math.sqrt((point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2 + (point_a[2] - point_b[2]) ** 2)
-
-
-# Create a cylinder between two points
-# j = k (start point) and o = i (end point)
-def define_cylinder(pa, pb, pc, points_list, j, o, rad, compression):
-
-    eq_cylinder = ((
-        ((points_list[o - 1][1] - points_list[j][1]) * c - (points_list[o - 1][2] - points_list[k][2]) * b)**2 +
-        ((points_list[o - 1][2] - points_list[k][2]) * a - (points_list[o - 1][0] - points_list[k][0]) * c)**2 +
-        ((points_list[o - 1][0] - points_list[k][0]) * b - (points_list[o - 1][1] - points_list[k][1]) * a)**2)) \
-                  / (a ** 2 + b ** 2 + c ** 2)
-
-    # if eq_cylinder == 0: print(" k = ", j, "i = ", o)
-    # print(eq_cylinder, " < ", (rad ** 2 * (a ** 2 + b ** 2 + c ** 2)))
-
-    if eq_cylinder < (rad ** 2):
-        return True
-
-    else:
-        return False
-
-
-
-# Calculate the vector director between two points
-def calculate_vector_dir(points_list, m):
-    vector = (points_list[m + 1][0] - points_list[m][0],
-              points_list[m + 1][1] - points_list[m][1],
-              points_list[m + 1][2] - points_list[m][2])
-
-    return vector
-
-
-# csv_file = './PlayerData_20240129102610.csv'
-csv_file = '../miscellaneous/cyril.csv'
+##extraction fichier
+csv_file = "../data_collected/labyrinth/participant_11.csv"
+# csv_file = "./cyril.csv"
 
 position_data = []
 isSick_data = []
@@ -62,7 +30,7 @@ with open(csv_file, newline='') as csvfile:
         y = float(line[2])
         z = float(line[3])
         is_sick = int(line[5])
-        position_data.append([x, y, z])
+        position_data.append([x, y, z])     # y = 0 for the labyrinth (unity measurement not always as 0)
         isSick_data.append(is_sick)
 
 # Cut list in sublist of 120 elements, 120 is the number of movements collected for 1 answer of sickness
@@ -88,25 +56,75 @@ isSick = []
 for sublist in isSick_data_list:
     isSick.append(sublist[0])
 
-# print(position_data_list)
-# print(isSick)
-
+## definition des variables importantes
 # Clean point too close of 0.3 distance
-distance_threshold = 0.3
+distance_threshold = 0.00000000001
 
 # Try different metrics
-radius = 1.3
+radius = 1.5
 
-count_compression = 0
-compression_list = []
+#n<120 n est le nombre de point d'écart entre chaque prise
+n=10
 
-plot_compression_list = []
-len_of_all_plot_compression_list_percentage = []
+## Fonctions utiles
+
+# Return distance between two points in format [x,y,z]
+def distance(point_a, point_b):
+    return math.sqrt((point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2 + (point_a[2] - point_b[2]) ** 2)
+
+
+# Create a cylinder between two points
+# j = k (start point) and o = i (end point)
+def define_cylinder(a, b, c, points_list, k, rad, p):
+
+    eq_cylinder = ((
+        ((points_list[p][1] - points_list[k][1]) * c - (points_list[p][2] - points_list[k][2]) * b)**2 +
+        ((points_list[p][2] - points_list[k][2]) * a - (points_list[p][0] - points_list[k][0]) * c)**2 +
+        ((points_list[p][0] - points_list[k][0]) * b - (points_list[p][1] - points_list[k][1]) * a)**2)) \
+                  / (a ** 2 + b ** 2 + c ** 2)
+
+    if eq_cylinder < (rad ** 2):
+        return True
+
+    else:
+        return False
+
+# Calculate the vector director between two points
+def calculate_vector_dir(points_list, i,k):
+    vector = (points_list[k][0] - points_list[i][0],
+              points_list[k][1] - points_list[i][1],
+              points_list[k][2] - points_list[i][2])
+
+    return vector
+
+
+#petite_liste est un bout des listes de tailles 120
+def calcul_general(petite_liste,count_compression,plot_compression_liste):
+    compteur=count_compression
+    n=len(petite_liste)
+    liste=plot_compression_liste
+
+    liste.append(petite_liste[0])
+
+    a, b, c = calculate_vector_dir(petite_liste,0,-1)  # VEC DIR
+    # Check if clean_sublist[i - 1] is inside the cylinder
+    for p in range(1,len(petite_liste)):
+        if define_cylinder(a, b, c, petite_liste, 0, radius, p):
+            compteur += 1
+        else:
+            liste.append(petite_liste[p])
+    return (compteur,plot_compression_liste)
+
+## Algo
+
+compression_list=[]
+len_of_all_plot_compression_list_percentage=[]
+plot_compression_liste=[]
+
 # For each sublist we compress movement player list and calculate the compression ratio
 for sublist in position_data_list:
     cleaned_sublist = []  # Sublist without points too close together
     count_compression = 0
-    plot_compression_list = []
 
     # Clean points too close together
     for i in range(1, 120):
@@ -116,46 +134,31 @@ for sublist in position_data_list:
             cleaned_sublist.append(sublist[i - 1])
 
     # Compression algorithm
-    k, i = (0, 2)
-    size = len(cleaned_sublist)
-    while k < size:
-        if k == size - 1:
-            count_compression += 1
+    for i in range(len(cleaned_sublist)):
+        if i%n==0 and i+n<=len(cleaned_sublist):
+            petite_liste=cleaned_sublist[i:i+n]
+            count_compression, plot_compression_liste = calcul_general(petite_liste,count_compression,plot_compression_liste)
+        elif i+n>len(cleaned_sublist):
+            count_compression += len(cleaned_sublist)-i
             break
-
-        if k == size - 2:
-            count_compression += 2
-            break
-
-        else:
-            a, b, c = calculate_vector_dir(cleaned_sublist, k)  # VEC DIR: sublist[k] / sublist[i]
-            # Check if clean_sublist[i - 1] is inside the cylinder
-            if define_cylinder(a, b, c, cleaned_sublist, k, i, radius, count_compression) is True:
-                count_compression += 1
-                if i < (size - 1):
-                    i += 1
-                else:
-                    break
-
-            else:
-                plot_compression_list.append(sublist[i - 1])
-                k = i - 1
-                i = k + 2
 
     compression_list.append(count_compression)
-    print(len(plot_compression_list))
-    len_of_all_plot_compression_list_percentage.append(((120 - len(plot_compression_list)) / 120) * 100)
+    len_of_all_plot_compression_list_percentage.append((compression_list[-1]*100)/120)
+
+print(compression_list)
+print(len_of_all_plot_compression_list_percentage)
+print(isSick)
+
+## Affichage
 
 # Créer une figure
-fig = plt.figure()
-
-# Créer un nouveau graphique 3D
-ax = fig.add_subplot(111, projection='3d')
+fig = go.Figure()
 
 # Extraire les coordonnées x, y et z de plot_compression_list
-x_red = [point[0] for point in plot_compression_list]
-z_red = [point[1] for point in plot_compression_list]
-y_red = [point[2] for point in plot_compression_list]
+x_red = [point[0] for point in plot_compression_liste]
+z_red = [point[1] for point in plot_compression_liste]
+y_red = [point[2] for point in plot_compression_liste]
+
 
 tmp_list = []
 colors = ['blue', 'green', 'red', 'purple', 'orange', 'yellow']
@@ -168,31 +171,23 @@ x_green = [point[0] for point in tmp_list]
 z_green = [point[1] for point in tmp_list]
 y_green = [point[2] for point in tmp_list]
 
-# Ajouter les points rouges au graphique
-ax.scatter(x_red, y_red, z_red, c='red')
-ax.scatter(x_green, y_green, z_green, c='green')
 
 
-# Parcourir chaque sous-liste dans position_data_list
-# for sublist in position_data_list:
-#     # Extraire les coordonnées x, y et z de la sous-liste
-#     x = [point[0] for point in sublist]
-#     z = [point[1] for point in sublist]
-#     y = [point[2] for point in sublist]
-#
-#     # Ajouter les points bleus au graphique
-#     ax.scatter(x, y, z, c='blue')
+#Parcourir chaque sous-liste dans position_data_list
+for sublist in position_data_list:
+    # Extraire les coordonnées x, y et z de la sous-liste
+    x = [point[0] for point in sublist]
+    z = [point[1] for point in sublist]
+    y = [point[2] for point in sublist]
+    fig.add_trace(go.Scatter3d(x=x, y=y, z=z, mode='markers', marker=dict(color='blue')))
 
-# Définir les labels des axes
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+fig.add_trace(go.Scatter3d(x=x_red, y=y_red, z=z_red, mode='markers', marker=dict(color='red')))
+fig.add_trace(go.Scatter3d(x=x_green, y=y_green, z=z_green, mode='markers', marker=dict(color='green')))
+
+fig.update_layout(scene=dict(xaxis_title='X', yaxis_title='Y', zaxis_title='Z'))
 
 # Afficher le graphique
-plt.show()
-
-print(len_of_all_plot_compression_list_percentage)
-print(isSick)
+fig.show()
 
 # Créer un DataFrame à partir des données
 df = pd.DataFrame({'compression': len_of_all_plot_compression_list_percentage, 'isSick': isSick})
@@ -216,4 +211,3 @@ output_path = os.path.join(output_folder, output_filename)
 df.to_excel(output_path, index=False)
 
 print(f"Le fichier Excel '{output_filename}' a été créé avec succès dans le dossier '{output_folder}'.")
-
