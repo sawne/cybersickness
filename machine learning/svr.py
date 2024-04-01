@@ -38,4 +38,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle SVR
-joblib.dump(svr_regressor, 'svr_regression_model.pkl')
+joblib.dump(svr_regressor, '../models/svr_regression_model.pkl')

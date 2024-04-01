@@ -42,4 +42,4 @@ plt.yticks(())
 plt.show()
 
 # Exportation du modèle de régression linéaire
-joblib.dump(regr, 'linear_regression_model.pkl')
+joblib.dump(regr, '../models/linear_regression_model.pkl')

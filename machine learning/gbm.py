@@ -8,6 +8,7 @@ import joblib
 folder_path = "../data_compressed/explorer"
 
 X, y = merge_excel(folder_path)
+print(X, y)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Création du modèle Gradient Boosting pour la régression
@@ -37,4 +38,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle Gradient Boosting
-joblib.dump(gb_regressor, 'gradient_boosting_regression_model.pkl')
+joblib.dump(gb_regressor, '../models/gradient_boosting_regression_model.pkl')

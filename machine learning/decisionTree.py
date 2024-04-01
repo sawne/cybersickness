@@ -40,4 +40,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle d'arbre de décision
-joblib.dump(tree_regressor, 'decision_tree_regression_model.pkl')
+joblib.dump(tree_regressor, '../models/decision_tree_regression_model.pkl')

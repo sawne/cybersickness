@@ -37,4 +37,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle ElasticNet
-joblib.dump(elastic_net, 'elastic_net_regression_model.pkl')
+joblib.dump(elastic_net, '../models/elastic_net_regression_model.pkl')

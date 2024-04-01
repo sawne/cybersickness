@@ -37,4 +37,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle Random Forest
-joblib.dump(rf_regressor, 'random_forest_regression_model.pkl')
+joblib.dump(rf_regressor, '../models/random_forest_regression_model.pkl')

@@ -45,4 +45,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle de régression polynomiale
-joblib.dump(model, 'polynomial_regression_model.pkl')
+joblib.dump(model, '../models/polynomial_regression_model.pkl')

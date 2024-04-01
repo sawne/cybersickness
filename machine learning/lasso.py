@@ -34,4 +34,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle Lasso
-joblib.dump(lasso, 'lasso_regression_model.pkl')
+joblib.dump(lasso, '../models/lasso_regression_model.pkl')

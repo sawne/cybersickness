@@ -34,4 +34,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle de régression Ridge
-joblib.dump(ridge, 'ridge_regression_model.pkl')
+joblib.dump(ridge, '../models/ridge_regression_model.pkl')

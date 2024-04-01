@@ -38,4 +38,4 @@ plt.legend()
 plt.show()
 
 # Exportation du modèle KNN
-joblib.dump(knn_regressor, 'knn_regression_model.pkl')
+joblib.dump(knn_regressor, '../models/knn_regression_model.pkl')

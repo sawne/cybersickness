@@ -13,7 +13,7 @@ new_data = pd.read_excel(new_data_path)
 X_new = new_data[['compression']]
 
 # Charger le modèle
-loaded_model = joblib.load('bayesian_regression_model.pkl')
+loaded_model = joblib.load('neural_network_regression_model.pkl')
 
 # Faire des prédictions sur de nouvelles données
 predictions = loaded_model.predict(X_new)
