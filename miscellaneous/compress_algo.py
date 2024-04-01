@@ -28,7 +28,7 @@ def define_cylinder(a, b, c, points_list, k, p, rad):
     :param k: The index of the starting point.
     :param p: The index of the ending point.
     :param rad: The radius of the cylinder.
-    :return: True if the cylinder passes through the points, False otherwise.
+    :return: True if cylinder contains point p, False otherwise.
     """
     eq_cylinder = ((
             ((points_list[p][1] - points_list[k][1]) * c - (points_list[p][2] - points_list[k][2]) * b) ** 2 +
