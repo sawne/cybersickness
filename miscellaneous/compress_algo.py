@@ -87,7 +87,7 @@ def check_points_in_cylinder(sublist_piece, compression_counter, preserved_point
 
 
 # Data file - Time, X, Y, Z, Rotation, isSick
-csv_file = "./cyril.csv"  # Test file
+csv_file = "./test.csv"  # Test file
 # csv_file = "../data_collected/labyrinth/participant_1.csv"
 
 position_data = []  # X, Y, Z
